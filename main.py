@@ -25,7 +25,7 @@ def parse_args():
     parser.add_argument(
         "--dataroot",
         type=str,
-        default="data/celeba",
+        default="/home/irteam/cajun7-dcloud-dir/DCGAN-practice/data/",
         help="the path to the directory containing the data.",
     )
 
@@ -126,16 +126,16 @@ def main():
     )
 
     dataset = dset.ImageFolder(root=args.dataroot, transform=preprocess)
-    dataloader = torch.utils.Dataloader(
+    dataloader = torch.utils.data.DataLoader(
         dataset, batch_size=args.batch_size, shuffle=True, num_workers=args.workers
     )
-
+    print(len(dataloader))
     device = torch.device(
         "cuda:0" if (torch.cuda.is_available() and args.n_gpu > 0) else "cpu"
     )
 
     real_image = next(iter(dataloader))
-    imshow_grid(real_image.view(-1, 3, args.image_size, args.image_size))
+    # imshow_grid(real_image.view(-1, 3, args.image_size, args.image_size))
 
     netG = models.G(args).to(device)
     if (device.type == "cuda") and (args.n_gpu > 1):
@@ -166,7 +166,7 @@ def main():
             #################
             netD.zero_grad()
 
-            data = data.reshape(-1, args.image_size * args.image_size)
+            # data_ = data[0].reshape(-1, args.image_size * args.image_size)
             noise = torch.randn(args.batch_size, args.z_dim, 1, 1, device=device)
 
             p_real = netD(data[0].to(device))
@@ -232,30 +232,43 @@ def main():
     plt.ylabel("Loss")
     plt.legend()
     plt.show()
-    
+
     # Visualize G
     #%%capture
-    fig = plt.figure(figsize=(8,8))
+    fig = plt.figure(figsize=(8, 8))
     plt.axis("off")
-    ims = [[plt.imshow(np.transpose(i,(1,2,0)), animated=True)] for i in img_list]
-    ani = animation.ArtistAnimation(fig, ims, interval=1000, repeat_delay=1000, blit=True)
+    ims = [[plt.imshow(np.transpose(i, (1, 2, 0)), animated=True)] for i in img_list]
+    ani = animation.ArtistAnimation(
+        fig, ims, interval=1000, repeat_delay=1000, blit=True
+    )
 
-    HTML(ani.to_jshtml())                   
-
+    # HTML(ani.to_jshtml())
 
     # Grab a batch of real images from the dataloader
     real_batch = next(iter(dataloader))
 
     # Plot the real images
-    plt.figure(figsize=(15,15))
-    plt.subplot(1,2,1)
+    plt.figure(figsize=(15, 15))
+    plt.subplot(1, 2, 1)
     plt.axis("off")
     plt.title("Real Images")
-    plt.imshow(np.transpose(vutils.make_grid(real_batch[0].to(device)[:64], padding=5, normalize=True).cpu(),(1,2,0)))
+    plt.imshow(
+        np.transpose(
+            vutils.make_grid(
+                real_batch[0].to(device)[:64], padding=5, normalize=True
+            ).cpu(),
+            (1, 2, 0),
+        )
+    )
 
     # Plot the fake images from the last epoch
-    plt.subplot(1,2,2)
+    plt.subplot(1, 2, 2)
     plt.axis("off")
     plt.title("Fake Images")
-    plt.imshow(np.transpose(img_list[-1],(1,2,0)))
+    plt.imshow(np.transpose(img_list[-1], (1, 2, 0)))
     plt.show()
+
+
+if __name__ == "__main__":
+    main()
+
